@@ -26,11 +26,12 @@ export const PROJECTS: Project[] = [
     categoryLabel: "VEHICLE",
     description: "High-performance off-road rally prototype featuring carbon-fiber widebody aero, reinforced beadlock wheels, and competition suspension.",
     longDescription: "The HEXA BISON VX-2.0 is a bespoke heavy-duty off-road racing platform engineered for extreme endurance rallies. Modeled with authentic mechanical kinematics, featuring custom carbon-composite fender flares, roof aerodynamic scoops, auxiliary LED rally arrays, beadlock competition wheels, and high-density quad topology ready for real-time engines.",
-    heroImage: "/projects/hexa-bison.webp",
+    heroImage: "/hero/hexa-bison-hero.webp",
     gallery: [
-      "/projects/hexa-bison.webp",
-      "/projects/hexa-bison-angle.webp",
-      "/projects/hexa-bison-wireframe.webp"
+      "/hero/hexa-bison-hero.webp",
+      "/projects/hexa-bison/hexa-bison-top.png",
+      "/projects/hexa-bison/hexa-bison-rear.png",
+      "/projects/hexa-bison/hexa-bison-wireframe.webp"
     ],
     services: ["Concept Design", "Sub-D High-Poly Modeling", "Game-Ready Retopology", "4K PBR Texturing", "Rally Livery Design"],
     client: "Moon 3D Studio Original",

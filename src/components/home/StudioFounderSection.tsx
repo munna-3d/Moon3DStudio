@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function StudioFounderSection() {
   return (
-    <section id="about" className="py-24 md:py-32 bg-[#090a0d] border-t border-white/5">
+    <section id="about" aria-label="About the Studio and Founder" className="py-24 md:py-32 bg-[#090a0d] border-t border-white/5">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Eyebrow */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-white/5 border border-white/10 text-xs font-mono font-bold tracking-widest uppercase text-[#d4ff00] mb-8">
@@ -31,7 +31,7 @@ export default function StudioFounderSection() {
               <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-[#d4ff00]/40 shrink-0">
                 <Image
                   src="/team/moon-ahmed.jpg"
-                  alt="Munna Ahmed - Founder & Lead 3D Artist"
+                  alt="Munna Ahmed — Founder and Lead 3D Artist at Moon 3D Studio"
                   fill
                   className="object-cover"
                 />

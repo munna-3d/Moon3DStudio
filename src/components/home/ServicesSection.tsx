@@ -1,20 +1,26 @@
 import React from "react";
 import Link from "next/link";
-import { SERVICES } from "@/data/services";
+import { SERVICES as STATIC_SERVICES, Service } from "@/data/services";
 import { Box, Gamepad2, Car, Shield, Sparkles, Layers, ArrowRight } from "lucide-react";
 
-export default function ServicesSection() {
+interface ServicesSectionProps {
+  services?: Service[];
+}
+
+export default function ServicesSection({ services = [] }: ServicesSectionProps) {
+  const displayServices = services.length > 0 ? services : STATIC_SERVICES;
+
   const iconMap: Record<string, React.ReactNode> = {
-    box: <Box className="w-5 h-5 text-[#d4ff00]" />,
-    gamepad: <Gamepad2 className="w-5 h-5 text-[#d4ff00]" />,
-    car: <Car className="w-5 h-5 text-[#d4ff00]" />,
-    shield: <Shield className="w-5 h-5 text-[#d4ff00]" />,
-    sparkles: <Sparkles className="w-5 h-5 text-[#d4ff00]" />,
-    layers: <Layers className="w-5 h-5 text-[#d4ff00]" />,
+    box: <Box className="w-5 h-5 text-[#d4ff00]" aria-hidden="true" />,
+    gamepad: <Gamepad2 className="w-5 h-5 text-[#d4ff00]" aria-hidden="true" />,
+    car: <Car className="w-5 h-5 text-[#d4ff00]" aria-hidden="true" />,
+    shield: <Shield className="w-5 h-5 text-[#d4ff00]" aria-hidden="true" />,
+    sparkles: <Sparkles className="w-5 h-5 text-[#d4ff00]" aria-hidden="true" />,
+    layers: <Layers className="w-5 h-5 text-[#d4ff00]" aria-hidden="true" />,
   };
 
   return (
-    <section id="services" className="py-24 md:py-32 bg-[#0b0d12] border-t border-white/5">
+    <section id="services" aria-label="3D Asset Production Services" className="py-24 md:py-32 bg-[#0b0d12] border-t border-white/5">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-14">
@@ -28,8 +34,8 @@ export default function ServicesSection() {
 
         {/* 6 Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {SERVICES.map((service) => (
-            <div
+          {displayServices.map((service) => (
+            <article
               key={service.id}
               className="group p-7 rounded-xl bg-[#12151b] border border-white/8 hover:border-[#d4ff00]/40 transition-all duration-300 flex flex-col justify-between"
             >
@@ -41,7 +47,9 @@ export default function ServicesSection() {
 
                 {/* Title */}
                 <h3 className="font-display font-bold text-lg text-white uppercase tracking-tight mb-3">
-                  {service.title}
+                  <Link href={`/services#${service.id}`} className="hover:text-[#d4ff00] transition-colors">
+                    {service.title}
+                  </Link>
                 </h3>
 
                 {/* Description */}
@@ -52,13 +60,14 @@ export default function ServicesSection() {
 
               {/* Action Link */}
               <Link
-                href="/services"
+                href={`/services#${service.id}`}
                 className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold tracking-wider text-zinc-400 group-hover:text-[#d4ff00] transition-colors"
+                aria-label={`Learn more about ${service.title}`}
               >
                 <span>LEARN MORE</span>
                 <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
               </Link>
-            </div>
+            </article>
           ))}
         </div>
       </div>

@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function StatementSection() {
   return (
-    <section className="py-20 md:py-28 bg-[#090a0d] border-t border-b border-white/5 relative">
+    <section aria-label="Studio Mission Statement" className="py-20 md:py-28 bg-[#090a0d] border-t border-b border-white/5 relative">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-white mb-6">
           WE TURN IDEAS INTO 3D.
@@ -17,6 +17,7 @@ export default function StatementSection() {
         <Link
           href="/studio"
           className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold tracking-widest uppercase text-[#d4ff00] hover:text-[#bcf000] group"
+          aria-label="Learn about Moon 3D Studio"
         >
           <span>LEARN ABOUT US</span>
           <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1.5 transition-transform" />

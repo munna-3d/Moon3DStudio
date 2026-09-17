@@ -1,9 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowUpRight, UploadCloud, X, CheckCircle2, Loader2, File } from "lucide-react";
+import { ArrowUpRight, UploadCloud, X, CheckCircle2, Loader2, File as FileIcon } from "lucide-react";
 
-export default function ContactSection() {
+interface ContactSectionProps {
+  isPage?: boolean;
+}
+
+export default function ContactSection({ isPage = false }: ContactSectionProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
@@ -14,7 +18,8 @@ export default function ContactSection() {
   const [timeline, setTimeline] = useState("Within 1 Month");
   const [budget, setBudget] = useState("$1000 - $3000");
   const [message, setMessage] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; size: string }[]>([]);
+  const [honeypot, setHoneypot] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -37,10 +42,7 @@ export default function ContactSection() {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files).map((f) => ({
-        name: f.name,
-        size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
-      }));
+      const newFiles = Array.from(e.target.files);
       setUploadedFiles((prev) => [...prev, ...newFiles]);
     }
   };
@@ -49,30 +51,72 @@ export default function ContactSection() {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) {
       setErrorMessage("Please enter both your name and email address.");
       return;
     }
+    if (!message.trim() || message.trim().length < 5) {
+      setErrorMessage("Please provide a brief description of your project (at least 5 characters).");
+      return;
+    }
+
     setErrorMessage("");
     setIsSubmitting(true);
 
-    // Simulate submission delay
-    setTimeout(() => {
+    try {
+      const formData = new FormData();
+      formData.append("name", name.trim());
+      formData.append("email", email.trim());
+      formData.append("company", company.trim());
+      formData.append("projectType", selectedNeeds.length > 0 ? selectedNeeds.join(", ") : "General 3D");
+      formData.append("timeline", timeline);
+      formData.append("budget", budget);
+      formData.append("description", message.trim());
+      formData.append("website_hp", honeypot); // Honeypot spam trap
+
+      // Append attached files
+      for (const file of uploadedFiles) {
+        formData.append("files", file);
+      }
+
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setErrorMessage(data.error || "Failed to submit project enquiry. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
       setIsSubmitting(false);
       setIsSubmitted(true);
-    }, 1200);
+    } catch (err) {
+      console.error("Submission error:", err);
+      setErrorMessage("Network error occurred. Please check your connection and try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <section id="contact" className="py-24 md:py-32 bg-[#090a0d] border-t border-white/5">
+    <section id="contact" aria-label="Contact Section" className="py-24 md:py-32 bg-[#090a0d] border-t border-white/5">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-white mb-3">
-            HAVE A PROJECT IN MIND?
-          </h2>
+          {isPage ? (
+            <h1 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-white mb-3">
+              START A PROJECT
+            </h1>
+          ) : (
+            <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-white mb-3">
+              HAVE A PROJECT IN MIND?
+            </h2>
+          )}
           <p className="text-sm sm:text-base text-zinc-400 font-normal">
             Tell us about your project and we&apos;ll get back to you within 24 hours.
           </p>
@@ -88,7 +132,7 @@ export default function ContactSection() {
               <h3 className="font-display font-bold text-2xl sm:text-3xl text-white uppercase tracking-tight">
                 PROJECT BRIEF RECEIVED
               </h3>
-              <p className="text-zinc-400 text-sm max-w-md mx-auto leading-relaxed">
+              <p className="text-zinc-400 text-sm max-w-md mx-auto leading-relaxed font-normal">
                 Thank you, <span className="text-white font-semibold">{name}</span>. We&apos;ve
                 received your project requirements and will review your specifications
                 shortly. Expect our response within 24 hours at{" "}
@@ -105,16 +149,30 @@ export default function ContactSection() {
                     setMessage("");
                     setUploadedFiles([]);
                   }}
-                  className="px-6 py-2.5 rounded bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider transition-colors"
+                  className="px-6 py-2.5 rounded bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
                 >
                   SUBMIT ANOTHER BRIEF
                 </button>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              {/* Invisible Honeypot field for bot protection */}
+              <div className="hidden" aria-hidden="true" style={{ display: "none" }}>
+                <label htmlFor="website_hp">Leave this field blank</label>
+                <input
+                  id="website_hp"
+                  type="text"
+                  name="website_hp"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+
               {errorMessage && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400 font-medium">
+                <div role="alert" className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400 font-medium">
                   {errorMessage}
                 </div>
               )}
@@ -122,10 +180,11 @@ export default function ContactSection() {
               {/* Name and Email */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
+                  <label htmlFor="contact-name" className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
                     NAME *
                   </label>
                   <input
+                    id="contact-name"
                     type="text"
                     required
                     value={name}
@@ -135,10 +194,11 @@ export default function ContactSection() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
+                  <label htmlFor="contact-email" className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
                     EMAIL *
                   </label>
                   <input
+                    id="contact-email"
                     type="email"
                     required
                     value={email}
@@ -151,10 +211,11 @@ export default function ContactSection() {
 
               {/* Company */}
               <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
+                <label htmlFor="contact-company" className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
                   COMPANY (OPTIONAL)
                 </label>
                 <input
+                  id="contact-company"
                   type="text"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
@@ -165,10 +226,10 @@ export default function ContactSection() {
 
               {/* What Do You Need Pills */}
               <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
+                <span className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
                   WHAT DO YOU NEED?
-                </label>
-                <div className="flex flex-wrap gap-2">
+                </span>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Services needed">
                   {needsOptions.map((opt) => {
                     const isSelected = selectedNeeds.includes(opt);
                     return (
@@ -176,7 +237,8 @@ export default function ContactSection() {
                         type="button"
                         key={opt}
                         onClick={() => toggleNeed(opt)}
-                        className={`px-3.5 py-2 rounded text-xs font-semibold uppercase tracking-wider transition-all ${
+                        aria-pressed={isSelected}
+                        className={`px-3.5 py-2 rounded text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
                           isSelected
                             ? "bg-[#d4ff00] text-black shadow-[0_0_12px_rgba(212,255,0,0.3)]"
                             : "bg-[#090a0d] text-zinc-400 hover:text-white border border-white/10"
@@ -192,10 +254,11 @@ export default function ContactSection() {
               {/* Timeline & Budget Dropdowns */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
+                  <label htmlFor="contact-timeline" className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
                     TARGET TIMELINE (OPTIONAL)
                   </label>
                   <select
+                    id="contact-timeline"
                     value={timeline}
                     onChange={(e) => setTimeline(e.target.value)}
                     className="w-full px-4 py-3 rounded-lg bg-[#090a0d] border border-white/10 text-white text-sm focus:outline-none focus:border-[#d4ff00] transition-colors cursor-pointer"
@@ -207,10 +270,11 @@ export default function ContactSection() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
+                  <label htmlFor="contact-budget" className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
                     ESTIMATED BUDGET
                   </label>
                   <select
+                    id="contact-budget"
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
                     className="w-full px-4 py-3 rounded-lg bg-[#090a0d] border border-white/10 text-white text-sm focus:outline-none focus:border-[#d4ff00] transition-colors cursor-pointer"
@@ -226,11 +290,13 @@ export default function ContactSection() {
 
               {/* Project Description Textarea */}
               <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
-                  TELL US ABOUT YOUR PROJECT
+                <label htmlFor="contact-message" className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
+                  TELL US ABOUT YOUR PROJECT *
                 </label>
                 <textarea
+                  id="contact-message"
                   rows={4}
+                  required
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Briefly describe your project requirements, scope, references, deadlines..."
@@ -240,16 +306,18 @@ export default function ContactSection() {
 
               {/* File Upload Zone */}
               <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
+                <label htmlFor="contact-file-upload" className="block text-[11px] font-mono uppercase tracking-wider text-zinc-400 mb-2">
                   PROJECT REFERENCES / ASSET BRIEF (OPTIONAL)
                 </label>
                 <div className="relative border border-dashed border-white/15 rounded-xl p-5 text-center hover:border-[#d4ff00]/50 transition-colors bg-[#090a0d]/50">
                   <input
+                    id="contact-file-upload"
                     type="file"
                     multiple
-                    accept=".jpg,.jpeg,.png,.pdf,.zip,.rar"
+                    accept=".jpg,.jpeg,.png,.webp,.pdf,.zip,.rar"
                     onChange={handleFileUpload}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    aria-label="Upload reference files (JPG, PNG, WEBP, PDF, ZIP, RAR up to 50MB)"
                   />
                   <div className="flex flex-col items-center justify-center pointer-events-none">
                     <UploadCloud className="w-7 h-7 text-zinc-400 mb-2" />
@@ -258,7 +326,7 @@ export default function ContactSection() {
                       <span className="text-[#d4ff00]">browse files</span>
                     </p>
                     <p className="text-[10px] font-mono text-zinc-400 mt-1">
-                      Supports JPG, PNG, PDF, ZIP, RAR (Max 50MB)
+                      Supports JPG, PNG, WEBP, PDF, ZIP, RAR (Max 50MB per file)
                     </p>
                   </div>
                 </div>
@@ -272,16 +340,17 @@ export default function ContactSection() {
                         className="flex items-center justify-between p-2 rounded bg-black/40 border border-white/5 text-xs text-zinc-300"
                       >
                         <div className="flex items-center gap-2 truncate">
-                          <File className="w-3.5 h-3.5 text-[#d4ff00] shrink-0" />
+                          <FileIcon className="w-3.5 h-3.5 text-[#d4ff00] shrink-0" />
                           <span className="truncate">{file.name}</span>
                           <span className="text-zinc-400 text-[10px] font-mono shrink-0">
-                            ({file.size})
+                            ({(file.size / (1024 * 1024)).toFixed(2)} MB)
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => removeFile(idx)}
-                          className="p-1 hover:text-red-400 text-zinc-400 transition-colors"
+                          className="p-1 hover:text-red-400 text-zinc-400 transition-colors cursor-pointer"
+                          aria-label={`Remove file ${file.name}`}
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -300,7 +369,7 @@ export default function ContactSection() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    SENDING INQUIRY...
+                    SUBMITTING BRIEF...
                   </>
                 ) : (
                   <>

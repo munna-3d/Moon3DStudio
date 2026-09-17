@@ -2,9 +2,12 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PROJECTS, getProjectBySlug } from "@/data/projects";
+import { getPublishedProjects, getProjectBySlug } from "@/lib/cms";
+import { SITE_URL, getBreadcrumbSchema, getProjectSchema } from "@/lib/seo";
 import { ArrowLeft, ArrowUpRight, CheckCircle2, Box, Layers, Cpu, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
+
+export const revalidate = 60;
 
 interface ProjectPageProps {
   params: Promise<{
@@ -13,7 +16,8 @@ interface ProjectPageProps {
 }
 
 export async function generateStaticParams() {
-  return PROJECTS.map((project) => ({
+  const projects = await getPublishedProjects();
+  return projects.map((project) => ({
     slug: project.slug,
   }));
 }
@@ -22,55 +26,127 @@ export async function generateMetadata({
   params,
 }: ProjectPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const project = await getProjectBySlug(slug);
 
   if (!project) {
     return {
-      title: "Project Not Found — Moon 3D Studio",
+      title: "Project Not Found | Moon 3D Studio",
+      robots: {
+        index: false,
+        follow: true,
+      },
     };
   }
 
+  const title = `${project.title} — ${project.categoryLabel === "VEHICLE" ? "Game-Ready 3D Vehicle" : project.categoryLabel === "HARD SURFACE" ? "3D Hard-Surface Asset" : "3D Environment Asset"} | Moon 3D Studio`;
+  const description = `${project.description} Created by Moon 3D Studio for real-time game engines.`;
+  const canonicalUrl = `${SITE_URL}/work/${project.slug}`;
+  const imageUrl = project.heroImage.startsWith("http")
+    ? project.heroImage
+    : `${SITE_URL}${project.heroImage}`;
+
   return {
-    title: `${project.title} — Moon 3D Studio Case Study`,
-    description: project.description,
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
-      title: `${project.title} — Moon 3D Studio`,
-      description: project.description,
-      images: [project.heroImage],
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: "Moon 3D Studio",
+      type: "article",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${project.title} 3D Asset by Moon 3D Studio`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
     },
   };
 }
 
 export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const [project, allProjects] = await Promise.all([
+    getProjectBySlug(slug),
+    getPublishedProjects(),
+  ]);
 
   if (!project) {
     notFound();
   }
 
-  const currentIndex = PROJECTS.findIndex((p) => p.slug === slug);
-  const nextProject = PROJECTS[(currentIndex + 1) % PROJECTS.length];
+  const currentIndex = allProjects.findIndex((p) => p.slug === slug);
+  const nextProject =
+    allProjects.length > 1
+      ? allProjects[(currentIndex + 1) % allProjects.length]
+      : project;
 
   // Additional renders excluding the main hero image
   const additionalRenders = project.gallery.filter((img) => img !== project.heroImage);
 
+  // Structured Data Schemas
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Work", url: "/work" },
+    { name: project.title, url: `/work/${project.slug}` },
+  ]);
+
+  const artworkSchema = getProjectSchema(project);
+
+  const getDescriptiveAlt = (img: string, idx: number) => {
+    if (img.includes("wireframe")) {
+      return `${project.title} low-poly wireframe showing optimized topology, quad edge flow, and triangle distribution`;
+    }
+    if (img.includes("angle")) {
+      return `${project.title} 3/4 perspective high-resolution render highlighting surface details and PBR materials`;
+    }
+    if (img.includes("action")) {
+      return `${project.title} atmospheric real-time engine action shot demonstrating dynamic lighting and shaders`;
+    }
+    return `${project.title} detailed 3D viewport angle ${idx + 2} created by Moon 3D Studio`;
+  };
+
   return (
-    <div className="pt-28 pb-24 bg-[#090a0d] min-h-screen text-white">
-      {/* Back Link & Breadcrumb */}
+    <article className="pt-28 pb-24 bg-[#090a0d] min-h-screen text-white">
+      {/* Inject Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(artworkSchema) }}
+      />
+
+      {/* Back Link & Breadcrumbs */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <Link
-          href="/work"
-          className="inline-flex items-center gap-2 text-xs font-mono font-semibold tracking-wider uppercase text-zinc-400 hover:text-[#d4ff00] transition-colors group"
-        >
-          <ArrowLeft className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" />
-          <span>BACK TO ALL PROJECTS</span>
-        </Link>
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-mono">
+          <Link
+            href="/work"
+            className="inline-flex items-center gap-2 font-semibold tracking-wider uppercase text-zinc-400 hover:text-[#d4ff00] transition-colors group"
+          >
+            <ArrowLeft className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" />
+            <span>BACK TO ALL PROJECTS</span>
+          </Link>
+          <span className="text-zinc-600">/</span>
+          <span className="text-[#d4ff00] uppercase truncate">{project.title}</span>
+        </nav>
       </div>
 
       <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
-        <div className="max-w-4xl mb-8">
+        <header className="max-w-4xl mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-white/5 border border-white/10 text-xs font-mono font-bold tracking-widest uppercase text-[#d4ff00] mb-3">
             <span className="w-1.5 h-1.5 rounded-full bg-[#d4ff00]" />
             {project.categoryLabel}
@@ -78,16 +154,16 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
           <h1 className="font-display font-extrabold text-3xl sm:text-5xl md:text-6xl uppercase tracking-tight text-white mb-4">
             {project.title}
           </h1>
-          <p className="text-zinc-400 text-sm sm:text-base md:text-lg leading-relaxed max-w-3xl">
+          <p className="text-zinc-400 text-sm sm:text-base md:text-lg leading-relaxed max-w-3xl font-normal">
             {project.longDescription || project.description}
           </p>
-        </div>
+        </header>
 
         {/* Hero Showcase Image */}
         <div className="relative w-full aspect-[16/9] lg:aspect-[21/10] rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black mb-12">
           <Image
             src={project.heroImage}
-            alt={project.title}
+            alt={`${project.title} — Flagship 3D ${project.categoryLabel.toLowerCase()} model render by Moon 3D Studio`}
             fill
             priority
             className="object-cover"
@@ -240,7 +316,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                   <div className="relative aspect-[16/10]">
                     <Image
                       src={img}
-                      alt={`${project.title} - View ${idx + 1}`}
+                      alt={getDescriptiveAlt(img, idx)}
                       fill
                       className="object-cover group-hover:scale-102 transition-transform duration-500"
                       sizes="(max-width: 768px) 100vw, 50vw"
@@ -266,11 +342,12 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
           <Link
             href={`/work/${nextProject.slug}`}
             className="group flex items-center gap-4 p-4 rounded-xl bg-[#11141a] border border-white/8 hover:border-[#d4ff00]/40 transition-all w-full md:w-auto"
+            aria-label={`View next project: ${nextProject.title}`}
           >
             <div className="relative w-20 h-14 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-black">
               <Image
                 src={nextProject.heroImage}
-                alt={nextProject.title}
+                alt={`${nextProject.title} thumbnail preview`}
                 fill
                 className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
@@ -295,6 +372,6 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
           </Link>
         </div>
       </section>
-    </div>
+    </article>
   );
 }

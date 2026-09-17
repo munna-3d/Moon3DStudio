@@ -2,10 +2,24 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { Project } from "@/data/projects";
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  featuredProject?: Project;
+}
+
+export default function HeroSection({ featuredProject }: HeroSectionProps) {
+  const heroImage = featuredProject?.heroImage || "/hero/hexa-bison-hero.webp";
+  const heroTitle = featuredProject?.title || "HEXA BISON VX-2.0";
+  const heroCategory = featuredProject?.categoryLabel || "VEHICLE";
+  const isVideo =
+    heroImage.endsWith(".mp4") ||
+    heroImage.endsWith(".webm") ||
+    heroImage.endsWith(".mov") ||
+    heroImage.endsWith(".ogg");
+
   return (
-    <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden bg-gradient-to-b from-[#090a0d] via-[#0b0d12] to-[#090a0d]">
+    <section aria-label="Hero Section" className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden bg-gradient-to-b from-[#090a0d] via-[#0b0d12] to-[#090a0d]">
       {/* Background ambient lighting */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-[#d4ff00]/5 blur-[120px] pointer-events-none rounded-full" />
 
@@ -42,14 +56,25 @@ export default function HeroSection() {
         {/* Hero Artwork Showcase */}
         <div className="mt-12 sm:mt-16 relative group">
           <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] rounded-xl overflow-hidden border border-white/10 bg-[#12151b] shadow-2xl">
-            <Image
-              src="/hero/hexa-bison-hero.webp"
-              alt="Moon 3D Studio Flagship HEXA BISON VX-2.0 3D Asset"
-              fill
-              priority
-              className="object-cover object-center group-hover:scale-[1.015] transition-transform duration-700 ease-out"
-              sizes="(max-width: 1280px) 100vw, 1280px"
-            />
+            {isVideo ? (
+              <video
+                src={heroImage}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Image
+                src={heroImage}
+                alt={`${heroTitle} — high-performance game-ready 3D ${heroCategory.toLowerCase()} model created by Moon 3D Studio`}
+                fill
+                priority
+                className="object-cover object-center group-hover:scale-[1.015] transition-transform duration-700 ease-out"
+                sizes="(max-width: 1280px) 100vw, 1280px"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-[#090a0d]/80 via-transparent to-transparent pointer-events-none" />
           </div>
         </div>

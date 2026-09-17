@@ -25,7 +25,7 @@ export default function HowItWorksSection() {
   ];
 
   return (
-    <section className="py-24 md:py-32 bg-[#090a0d] border-t border-white/5">
+    <section aria-label="Production Workflow" className="py-24 md:py-32 bg-[#090a0d] border-t border-white/5">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-14">

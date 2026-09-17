@@ -3,14 +3,20 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { PROJECTS, Project } from "@/data/projects";
+import { PROJECTS as STATIC_PROJECTS, Project } from "@/data/projects";
 import TechDetailsModal from "./TechDetailsModal";
 
 type FilterCategory = "ALL" | "VEHICLES" | "HARD SURFACE" | "ENVIRONMENT" | "OTHER";
 
-export default function SelectedWorkSection() {
+interface SelectedWorkSectionProps {
+  projects?: Project[];
+}
+
+export default function SelectedWorkSection({ projects = [] }: SelectedWorkSectionProps) {
   const [activeFilter, setActiveFilter] = useState<FilterCategory>("ALL");
   const [selectedTechProject, setSelectedTechProject] = useState<Project | null>(null);
+
+  const displayProjects = projects.length > 0 ? projects : STATIC_PROJECTS;
 
   const filterCategories: FilterCategory[] = [
     "ALL",
@@ -22,11 +28,11 @@ export default function SelectedWorkSection() {
 
   const filteredProjects =
     activeFilter === "ALL"
-      ? PROJECTS
-      : PROJECTS.filter((p) => p.category === activeFilter);
+      ? displayProjects
+      : displayProjects.filter((p) => p.category === activeFilter);
 
   return (
-    <section id="work" className="py-24 md:py-32 bg-[#090a0d]">
+    <section id="work" aria-label="Selected 3D Game Art Projects" className="py-24 md:py-32 bg-[#090a0d]">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header with Category Filters */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
@@ -40,14 +46,16 @@ export default function SelectedWorkSection() {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Project filter categories">
             {filterCategories.map((cat) => {
               const isActive = activeFilter === cat;
               return (
                 <button
                   key={cat}
+                  type="button"
                   onClick={() => setActiveFilter(cat)}
-                  className={`px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-all ${
+                  aria-pressed={isActive}
+                  className={`px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer ${
                     isActive
                       ? "bg-[#d4ff00] text-black shadow-[0_0_12px_rgba(212,255,0,0.3)]"
                       : "bg-[#14171e] text-zinc-400 hover:text-white hover:bg-[#1a1f29] border border-white/5"
@@ -63,7 +71,7 @@ export default function SelectedWorkSection() {
         {/* Project Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => (
-            <div
+            <article
               key={project.slug}
               className="group relative flex flex-col rounded-xl overflow-hidden bg-[#11141a] border border-white/8 hover:border-[#d4ff00]/40 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.6)]"
             >
@@ -71,10 +79,11 @@ export default function SelectedWorkSection() {
               <Link
                 href={`/work/${project.slug}`}
                 className="relative w-full aspect-[16/10] overflow-hidden bg-black block"
+                aria-label={`View ${project.title} 3D case study`}
               >
                 <Image
                   src={project.heroImage}
-                  alt={project.title}
+                  alt={`${project.title} — ${project.categoryLabel} 3D asset created by Moon 3D Studio`}
                   fill
                   className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -99,8 +108,10 @@ export default function SelectedWorkSection() {
                 <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
                   {project.actionText === "Technical Details +" ? (
                     <button
+                      type="button"
                       onClick={() => setSelectedTechProject(project)}
                       className="text-xs font-mono font-medium text-zinc-400 hover:text-[#d4ff00] transition-colors flex items-center gap-1 cursor-pointer"
+                      aria-label={`Open technical specifications for ${project.title}`}
                     >
                       Technical Details +
                     </button>
@@ -108,6 +119,7 @@ export default function SelectedWorkSection() {
                     <Link
                       href={`/work/${project.slug}`}
                       className="text-xs font-mono font-medium text-[#d4ff00] hover:text-[#bcf000] transition-colors flex items-center gap-1"
+                      aria-label={`Explore ${project.title} model`}
                     >
                       EXPLORE MODEL ↗
                     </Link>
@@ -117,7 +129,7 @@ export default function SelectedWorkSection() {
                   </span>
                 </div>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>

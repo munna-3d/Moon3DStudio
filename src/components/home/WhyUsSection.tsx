@@ -6,27 +6,27 @@ export default function WhyUsSection() {
     {
       title: "QUALITY",
       desc: "Production-ready quality across all assets.",
-      icon: <CheckCircle2 className="w-5 h-5 text-[#d4ff00]" />,
+      icon: <CheckCircle2 className="w-5 h-5 text-[#d4ff00]" aria-hidden="true" />,
     },
     {
       title: "COMMUNICATION",
       desc: "Clear communication throughout the project.",
-      icon: <MessageSquare className="w-5 h-5 text-[#d4ff00]" />,
+      icon: <MessageSquare className="w-5 h-5 text-[#d4ff00]" aria-hidden="true" />,
     },
     {
       title: "FLEXIBILITY",
       desc: "Adaptive options for your specific requirements.",
-      icon: <Sliders className="w-5 h-5 text-[#d4ff00]" />,
+      icon: <Sliders className="w-5 h-5 text-[#d4ff00]" aria-hidden="true" />,
     },
     {
       title: "RELIABLE DELIVERY",
       desc: "Deadlines and milestones that stay on schedule.",
-      icon: <Clock className="w-5 h-5 text-[#d4ff00]" />,
+      icon: <Clock className="w-5 h-5 text-[#d4ff00]" aria-hidden="true" />,
     },
   ];
 
   return (
-    <section className="py-24 md:py-32 bg-[#0b0d12] border-t border-white/5">
+    <section aria-label="Why Work With Moon 3D Studio" className="py-24 md:py-32 bg-[#0b0d12] border-t border-white/5">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-14">
